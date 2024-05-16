@@ -3,7 +3,7 @@ const axios = require("axios");
 const path = require("path");
 const { getPrefix } = global.utils;
 const { commands, aliases } = global.GoatBot;
-const doNotDelete ="「 🐐 | Emli Bot 」";
+const doNotDelete ="「 🐐 | Liza Bot 」";
 /** 
 * @author NTKhang
 * @author: do not delete it
@@ -38,7 +38,7 @@ module.exports = {
  
 	langs: {
 		en: {			help: 
-      `╭───✧EMLI-AI
+      `╭───✧LIZA-AI
 │✿︎ nemo ✿︎ bard
 │✿︎ gemini ✿︎ gpt
 │✿︎ ask ✿︎ imagine
@@ -70,7 +70,7 @@ module.exports = {
 │✿︎ wasted ✿︎ shit
 │✿︎ avoid ✿︎ emoji
 ╰───────────❀
-╭──❀『 EMLI 』
+╭──❀『 LIZA 』
 │Total cmds:[ %4 ].
 ╰───────────❀
 ╭───❀
