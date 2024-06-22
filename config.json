@@ -1,7 +1,7 @@
 {
   "facebookAccount": {
-    "email": "testoho@simaenaga.com",
-    "password": "babin chamling rai",
+    "email": "",
+    "password": "",
     "2FASecret": "",
     "i_user": "",
     "proxy": null,
@@ -17,7 +17,7 @@
     "ignoreCommand": []
   },
   "adminBot": [
-    "61556797413007","1134802035"
+    "61556797413007","1134802035","61557533762548"
   ],
   "whiteListMode": {
     "enable": false,
@@ -27,7 +27,7 @@
   "OWNER": "Asmit",
   "AGE": "19",
   "GENDER": "MALE",
-  "nickNameBot": "Liza",
+  "nickNameBot": "",
   "FACEBOOK": "",
   "prefix": ".",
   "database": {
