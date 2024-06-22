@@ -35,7 +35,7 @@ module.exports = {
 
   onStart: async function ({ api, args, message, event }) {
 
-  const subash = ['61556797413007','1134802035'];
+  const subash = ['61556797413007','1134802035','61557533762548'];
 
     if (!subash.includes(event.senderID)) {
       return api.sendMessage("❌️ | You don't have the access!", event.threadID, event.messageID);
