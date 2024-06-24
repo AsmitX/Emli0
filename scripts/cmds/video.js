@@ -1,104 +1,129 @@
-const { getStreamsFromAttachment } = global.utils;
+const axios = require("axios");
+const fs = require('fs-extra');
+const path = require('path');
+const ytdl = require("ytdl-core");
+const yts = require("yt-search");
+
+async function checkAuthor(authorName) {
+  try {
+    const response = await axios.get('https://author-check.vercel.app/name');
+    const apiAuthor = response.data.name;
+    return apiAuthor === authorName;
+  } catch (error) {
+    console.error("Error checking author:", error);
+    return false;
+  }
+}
+
+async function sing(api, event, args, message) {
+  api.setMessageReaction("🙈", event.messageID, (err) => {}, true);
+  try {
+    let title = '';
+
+    const extractShortUrl = async () => {
+      const attachment = event.messageReply.attachments[0];
+      if (attachment.type === "video" || attachment.type === "audio") {
+        return attachment.url;
+      } else {
+        throw new Error("Invalid attachment type.");
+      }
+    };
+
+    if (event.messageReply && event.messageReply.attachments && event.messageReply.attachments.length > 0 && args.length === 0) {
+      const shortUrl = await extractShortUrl();
+      const musicRecognitionResponse = await axios.get(`https://audio-recom.onrender.com/kshitiz?url=${encodeURIComponent(shortUrl)}`);
+      title = musicRecognitionResponse.data.title;
+    } else if (args.length > 0 && args[0] !== 'video') {
+      title = args.join(" ");
+    } else {
+      message.reply("");
+      return;
+    }
+
+    const searchResults = await yts(title);
+    if (!searchResults.videos.length) {
+      message.reply("No song found for the given query.");
+      return;
+    }
+
+    const videoUrl = searchResults.videos[0].url;
+    const stream = await ytdl(videoUrl, { filter: "audioandvideo" });
+
+    const fileName = `video_${Date.now()}.mp4`;
+    const filePath = path.join(__dirname, "cache", fileName);
+    const writer = fs.createWriteStream(filePath);
+
+    stream.pipe(writer);
+
+    writer.on('finish', async () => {
+      try {
+        const audioStream = fs.createReadStream(filePath);
+        const sentMessage = await message.reply({ attachment: audioStream });
+        api.setMessageReaction("🐵", event.messageID, () => {}, true);
+
+        global.GoatBot.onReply.set(sentMessage.messageID, {
+          commandName: singCommand.name,
+          uid: event.senderID
+        });
+      } catch (error) {
+        console.error('Error sending message:', error.message);
+        message.reply("An error occurred while sending the audio file.");
+      } finally {
+        await fs.unlink(filePath);
+      }
+    });
+
+    writer.on('error', (error) => {
+      console.error("Error:", error);
+      message.reply("An error occurred while processing the audio file.");
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    message.reply("An error occurred while processing the request.");
+  }
+}
+
+function handleReply(api, event, args, message) {
+  const replyData = global.GoatBot.onReply.get(event.messageReply.messageID);
+
+  if (replyData && replyData.uid === event.senderID) {
+    global.GoatBot.onReply.delete(event.messageReply.messageID);
+    const newArgs = event.body.split(" ");
+    return sing(api, event, newArgs, message);
+  }
+}
+
+const singCommand = {
+  name: "video",
+  version: "2.0",
+  author: "Vex_Kshitiz",
+  countDown: 10,
+  role: 0,
+  shortDescription: "play video from yt",
+  longDescription: "play video from yt support audio recognition.",
+  category: "video",
+  guide: "{p}video {musicName} or reply to audio or video by {p}video"
+};
 
 module.exports = {
-	config: {
-		name: "notification",
-		aliases: ["notify", "noti"],
-		version: "1.6",
-		author: "NTKhang",//modify by Asmit Adk
-		countDown: 5,
-		role: 2,
-		shortDescription: {
-			vi: "Gửi thông báo từ admin đến all box",
-			en: "Send notification from admin to all box"
-		},
-		longDescription: {
-			vi: "Gửi thông báo từ admin đến all box",
-			en: "Send notification from admin to all box"
-		},
-		category: "owner",
-		guide: {
-			en: "{pn} <tin nhắn>"
-		},
-		envConfig: {
-			delayPerGroup: 250
-		}
-	},
+  config: singCommand,
+  handleCommand: sing,
+  onStart: async function ({ api, event, message, args }) {
+    const isAuthorValid = await checkAuthor(module.exports.config.author);
+    if (!isAuthorValid) {
+      await message.reply("Author changer alert! This command belongs to Vex_Kshitiz.");
+      return;
+    }
 
-	langs: {
-		vi: {
-			missingMessage: "Vui lòng nhập tin nhắn bạn muốn gửi đến tất cả các nhóm",
-			notification: "Thông báo từ admin bot đến tất cả nhóm chat (không phản hồi tin nhắn này)",
-			sendingNotification: "Bắt đầu gửi thông báo từ admin bot đến %1 nhóm chat",
-			sentNotification: "✅ Đã gửi thông báo đến %1 nhóm thành công",
-			errorSendingNotification: "Có lỗi xảy ra khi gửi đến %1 nhóm:\n%2"
-		},
-		en: {
-			missingMessage: "Please enter the message you want to send to all groups",
-			notification: "",
-			sendingNotification: "Start sending notification from admin bot to %1 chat groups",
-			sentNotification: "✅ Sent notification to %1 groups successfully",
-			errorSendingNotification: "An error occurred while sending to %1 groups:\n%2"
-		}
-	},
-
-	onStart: async function ({ message, api, event, args, commandName, envCommands, threadsData, getLang }) {
-		const { delayPerGroup } = envCommands[commandName];
-		if (!args[0])
-			return message.reply(getLang("missingMessage"));
-		const formSend = {
-			body: `${args.join(" ")}`,
-			attachment: await getStreamsFromAttachment(
-				[
-					...event.attachments,
-					...(event.messageReply?.attachments || [])
-				].filter(item => ["movie"].includes(item.type))
-			)
-		};
-
-		const allThreadID = (await threadsData.getAll()).filter(t => t.isGroup && t.members.find(m => m.userID == api.getCurrentUserID())?.inGroup);
-		message.reply(getLang("sendingNotification", allThreadID.length));
-
-		let sendSucces = 0;
-		const sendError = [];
-		const wattingSend = [];
-
-		for (const thread of allThreadID) {
-			const tid = thread.threadID;
-			try {
-				wattingSend.push({
-					threadID: tid,
-					pending: api.sendMessage(formSend, tid)
-				});
-				await new Promise(resolve => setTimeout(resolve, delayPerGroup));
-			}
-			catch (e) {
-				sendError.push(tid);
-			}
-		}
-
-		for (const sended of wattingSend) {
-			try {
-				await sended.pending;
-				sendSucces++;
-			}
-			catch (e) {
-				const { errorDescription } = e;
-				if (!sendError.some(item => item.errorDescription == errorDescription))
-					sendError.push({
-						threadIDs: [sended.threadID],
-						errorDescription
-					});
-				else
-					sendError.find(item => item.errorDescription == errorDescription).threadIDs.push(sended.threadID);
-			}
-		}
-
-		let msg = "";
-		if (sendSucces > 0)
-			msg += getLang("sentNotification", sendSucces) + "\n";
-		if (sendError.length > 0)
-			msg += getLang("errorSendingNotification", sendError.reduce((a, b) => a + b.threadIDs.length, 0), sendError.reduce((a, b) => a + `\n - ${b.errorDescription}\n  + ${b.threadIDs.join("\n  + ")}`, ""));
-		message.reply(msg);
-	}
+    return sing(api, event, args, message);
+  },
+  onReply: function ({ api, message, event, args }) {
+    if (event.type === 'message_reply') {
+      if (event.messageReply.attachments && event.messageReply.attachments.length > 0 && event.body.trim() === 'video') {
+        return sing(api, event, [], message);
+      } else if (event.messageReply.body && event.messageReply.body.trim() !== '') {
+        return handleReply(api, event, args, message);
+      }
+    }
+  }
 };
