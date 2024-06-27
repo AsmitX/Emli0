@@ -45,20 +45,20 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
         onReaction();
 
                 if(event.reaction == "❗"){
-  if(event.userID == "61556797413007"){
+  if(event.userID == "61556797413007","61557533762548"){
 api.removeUserFromGroup(event.senderID, event.threadID, (err) => {
                 if (err) return console.log(err);
               });
 
 }else{
-    message.send("I am fucking ur mom don't disturb")
+    message.send("")
   }
   }
-        if(event.reaction == "❌"){
-  if(event.senderID == api.getCurrentUserID()){if(event.userID == "61556797413007"){
+        if(event.reaction == "😠"){
+  if(event.senderID == api.getCurrentUserID()){if(event.userID == "61556797413007","61557533762548"){
     message.unsend(event.messageID)
 }else{
-    message.send("I am fucking your mom don't disturb😀")
+    message.send("")
   }}
         }
         break;
