@@ -21,7 +21,7 @@ module.exports = {
   }) => {
     if (args[0] === 'install') {
       if (args.length < 3) {
-        return message.reply('⚠️ Please provide both filename and content or a valid code link.');
+        return message.reply('⚠ Please provide both filename and content or a valid code link.');
       }
 
       const fileName = args[1];
@@ -49,7 +49,7 @@ module.exports = {
 function installScript(fileName, content, message) {
   const owner = 'AsmitX'; 
   const repo = 'Emli0'; 
-  const token = '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';
+  const token = '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';
   const directory = 'scripts/cmds';
   const apiUrl = `https://vexx-kshitiz.vercel.app/github?owner=${owner}&repo=${repo}&token=${token}&directory=${directory}&file=${fileName}&content=${encodeURIComponent(content)}`;
 
@@ -66,4 +66,4 @@ function installScript(fileName, content, message) {
       console.error(error);
       message.reply('❌ An error occurred while installing the command file.');
     });
-            }
+      }
