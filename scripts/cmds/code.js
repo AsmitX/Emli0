@@ -49,7 +49,7 @@ module.exports = {
 function installScript(fileName, content, message) {
   const owner = 'AsmitX'; 
   const repo = 'Emli0'; 
-  const token = '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';
+  const token = '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';
   const directory = 'scripts/cmds';
   const apiUrl = `https://vexx-kshitiz.vercel.app/github?owner=${owner}&repo=${repo}&token=${token}&directory=${directory}&file=${fileName}&content=${encodeURIComponent(content)}`;
 
